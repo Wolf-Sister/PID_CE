@@ -1,0 +1,79 @@
+cat > .gitignore << 'EOF'
+# STM32CubeMX 项目忽略规则 - 个人项目（Keil）
+
+# =============================================
+# CubeMX 元数据文件
+# =============================================
+*.mxproject
+# 注意: .ioc 文件是核心配置，必须保留，不要忽略！
+
+# =============================================
+# IDE 项目文件夹处理
+# =============================================
+
+# 忽略 IAR 整个文件夹（不使用 IAR）
+EWARM/
+
+# 忽略其他 IDE 文件夹
+TrueSTUDIO/
+SW4STM32/
+.stm32cubeide/
+
+# Keil MDK-ARM：保留工程文件，忽略输出文件
+MDK-ARM/Listings/
+MDK-ARM/Objects/
+MDK-ARM/RTE/Device/
+MDK-ARM/*.uvguix.*
+MDK-ARM/DebugConfig/*.dbgconf
+MDK-ARM/*.dbgconf
+MDK-ARM/*.lnp
+MDK-ARM/*.iex
+MDK-ARM/*.htm
+MDK-ARM/*.sct
+MDK-ARM/*.build_log.htm
+MDK-ARM/.vscode/
+MDK-ARM/DebugConfig/
+
+# =============================================
+# 构建输出文件
+# =============================================
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+[Oo]bj/
+[Oo]utput/
+
+# =============================================
+# 可执行文件和中间文件
+# =============================================
+*.elf
+*.hex
+*.bin
+*.axf
+*.o
+*.su
+*.list
+*.map
+*.lst
+*.d
+*.dep
+*.crf
+
+# =============================================
+# 系统文件
+# =============================================
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+
+# =============================================
+# 用户特定文件
+# =============================================
+*.local
+*.user
+EOF
+
+# 忽略 FreeRTOS 说明文档（可选，非必须源码）
+Middlewares/Third_Party/FreeRTOS/Source/*.txt
+
