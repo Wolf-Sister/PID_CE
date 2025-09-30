@@ -139,7 +139,7 @@ const osEventFlagsAttr_t motor_stop_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-void send_gimbal_motor_cmd(uint8_t motor_id, uint8_t direction, uint16_t speed, uint8_t accel_level,
+void send_motor_cmd(uint8_t motor_id, uint8_t direction, uint16_t speed, uint8_t accel_level,
 				   uint32_t pulse_count, uint8_t pos_mode, uint8_t sync_enable);
 void send_gimbal_motor_cmd(uint8_t motor_id, uint8_t direction, uint16_t speed, uint8_t accel_level,
 				   uint32_t pulse_count, uint8_t pos_mode, uint8_t sync_enable);

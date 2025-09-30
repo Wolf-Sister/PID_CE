@@ -214,53 +214,52 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		// 重新启动DMA接收
 		HAL_UART_Receive_DMA(&huart4, receiveData, 7);
 	}
-    if (huart == &huart6){
-        if (vofacmd_data[0] == 0xAA && vofacmd_data[1] == 0xAF && vofacmd_data[7] == 0xFE){
-            // 处理vofa命令数据
-            switch (vofacmd_data[2])
-            {
-			float value;
-            case 0x01:
-                // 修改P
-                
-                memcpy(&value, vofacmd_data + 3, 4);
-                pid_kp = value;
-                pid_ce = 1;
-                break;
-            case 0x02:
-                // 修改I
-                memcpy(&value, vofacmd_data + 3, 4);
-                pid_ki = value;
-                pid_ce = 1;
-                break;
-            case 0x03:
-                // 修改D
-                memcpy(&value, vofacmd_data + 3, 4);
-                pid_kd = value;
-                pid_ce = 1;
-                break;
-            case 0x04:
-                // 修改误差量
-                if (vofacmd_data[3] == 0x00 && vofacmd_data[4] == 0x00 && vofacmd_data[5] == 0x80 && vofacmd_data[6] == 0x3F){
-                    pid_hc = 1;
-                }
-                break;
-            case 0x05:
-                // 修改控制量
-                memcpy(&value, vofacmd_data + 3, 4);
-
-                SensorData_t Data;
-                Data.x = (int16_t)value;
-			    Data.y = 0;
-                BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-			    xQueueSendToBackFromISR(receiveDataQueue, &Data, &xHigherPriorityTaskWoken);
-			    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-            default:
-                break;
-            }
+  if (huart == &huart6){
+    if (vofacmd_data[0] == 0xAA && vofacmd_data[1] == 0xAF && vofacmd_data[7] == 0xFE){
+      // 处理vofa命令数据
+      SensorData_t Data;
+      float value;
+      BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+      switch (vofacmd_data[2])
+      {
+      case 0x01:
+        // 修改P
+        memcpy(&value, vofacmd_data + 3, 4);
+        pid_kp = value;
+        pid_ce = 1;
+        break;
+      case 0x02:
+        // 修改I
+        memcpy(&value, vofacmd_data + 3, 4);
+        pid_ki = value;
+        pid_ce = 1;
+        break;
+      case 0x03:
+        // 修改D
+        memcpy(&value, vofacmd_data + 3, 4);
+        pid_kd = value;
+        pid_ce = 1;
+        break;
+      case 0x04:
+        // 修改误差量
+        if (vofacmd_data[3] == 0x00 && vofacmd_data[4] == 0x00 && vofacmd_data[5] == 0x80 && vofacmd_data[6] == 0x3F){
+          pid_hc = 1;
         }
-		HAL_UART_Receive_DMA(&huart6, vofacmd_data, 8);
+        break;
+      case 0x05:
+        // 修改控制量
+        memcpy(&value, vofacmd_data + 3, 4);
+        Data.x = (int16_t)value;
+        Data.y = 0;
+        xQueueSendToBackFromISR(receiveDataQueue, &Data, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+        break;
+      default:
+        break;
+      }
     }
+    HAL_UART_Receive_DMA(&huart6, vofacmd_data, 8);
+  }
 }
 /* USER CODE END 4 */
 
