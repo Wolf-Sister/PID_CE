@@ -41,6 +41,7 @@ typedef struct {
     int16_t x;  // x轴差值
 	int16_t y;  // y轴差值
 } SensorData_t;
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -59,6 +60,7 @@ void Error_Handler(void);
 /* USER CODE BEGIN EFP */
 extern QueueHandle_t receiveDataQueue;
 extern uint8_t uartTxReady;
+extern uint8_t uartTxReady6;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

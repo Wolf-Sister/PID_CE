@@ -54,6 +54,7 @@ extern QueueHandle_t receiveDataQueue;
 extern PID_Controller pid_pitch;
 extern PID_Controller pid_yaw;
 extern uint8_t uartTxReady;
+extern uint8_t uartTxReady6;
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -80,6 +81,13 @@ const osThreadAttr_t SendyawData_attributes = {
 osThreadId_t SendpitchDataHandle;
 const osThreadAttr_t SendpitchData_attributes = {
   .name = "SendpitchData",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
+/* Definitions for BackPIDce */
+osThreadId_t BackPIDceHandle;
+const osThreadAttr_t BackPIDce_attributes = {
+  .name = "BackPIDce",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
@@ -130,12 +138,14 @@ void send_gimbal_motor_cmd(uint8_t motor_id, uint8_t direction, uint16_t speed, 
 				   uint32_t pulse_count, uint8_t pos_mode, uint8_t sync_enable);
 void send_gimbal_motor_cmd(uint8_t motor_id, uint8_t direction, uint16_t speed, uint8_t accel_level,
 				   uint32_t pulse_count, uint8_t pos_mode, uint8_t sync_enable);
+void send_VOFA_data(float ch1, float ch2, float ch3, float ch4);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
 void StartTask02(void *argument);
 void StartTask03(void *argument);
 void StartTask04(void *argument);
+void StartTask05(void *argument);
 void Callback01(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -203,6 +213,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of SendpitchData */
   SendpitchDataHandle = osThreadNew(StartTask04, NULL, &SendpitchData_attributes);
+
+  /* creation of BackPIDce */
+  BackPIDceHandle = osThreadNew(StartTask05, NULL, &BackPIDce_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -391,6 +404,25 @@ void StartTask04(void *argument)
   /* USER CODE END StartTask04 */
 }
 
+/* USER CODE BEGIN Header_StartTask05 */
+/**
+* @brief Function implementing the BackPIDce thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask05 */
+void StartTask05(void *argument)
+{
+  /* USER CODE BEGIN StartTask05 */
+  /* Infinite loop */
+  for(;;)
+  {
+    send_VOFA_data(1.0f, 2.0f, 3.0f, 4.0f);
+    osDelay(100);
+  }
+  /* USER CODE END StartTask05 */
+}
+
 /* Callback01 function */
 void Callback01(void *argument)
 {
@@ -456,6 +488,28 @@ void send_gimbal_motor_cmd(uint8_t motor_id, uint8_t direction, uint16_t speed, 
 			uartTxReady = 1; // 标记正在发送，等待发送完成
 		}
 	}
+}
+
+//VOFA数据发送函数
+void send_VOFA_data(float ch1, float ch2, float ch3, float ch4) {
+    if(uartTxReady6 == 0) {
+        static uint8_t vofa_data[20];
+
+        memcpy(vofa_data, &ch1, sizeof(ch1));
+        memcpy(vofa_data + 4, &ch2, sizeof(ch2));
+        memcpy(vofa_data + 8, &ch3, sizeof(ch3));
+        memcpy(vofa_data + 12, &ch4, sizeof(ch4));
+		vofa_data[16] = 0x00;
+        vofa_data[17] = 0x00;
+        vofa_data[18] = 0x80;
+        vofa_data[19] = 0x7f;
+        //for(int i=0;i<20;i++) printf("%02X ", ((uint8_t*)&vofa_data)[i]);
+        if (osMutexAcquire(UART6Handle, osWaitForever) == osOK) {
+            HAL_UART_Transmit_DMA(&huart6, vofa_data, 20);
+            osMutexRelease(UART6Handle);
+        }
+        uartTxReady6 = 1;
+    }
 }
 /* USER CODE END Application */
 

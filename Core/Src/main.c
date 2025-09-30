@@ -53,6 +53,7 @@ QueueHandle_t receiveDataQueue = NULL;// 接收数据队列
 PID_Controller pid_pitch;// PID控制器俯仰
 PID_Controller pid_yaw;// PID控制器偏航
 uint8_t uartTxReady = 0; // 串口发送完成标志
+uint8_t uartTxReady6 = 0; // 串口6发送完成标志
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -68,6 +69,9 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
         if(huart == &huart2) {
             uartTxReady = 0; // 标记发送完成，可以再次发送
             // 这里也可以进行其他的处理
+        }
+        if(huart == &huart6) {
+            uartTxReady6 = 0; // 标记发送完成，可以再次发送
         }
     }   
 /* USER CODE END 0 */
