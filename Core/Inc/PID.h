@@ -24,7 +24,7 @@ typedef struct {
 
 void PID_Init(PID_Controller *pid, float Kp, float Ki, float Kd);
 float PID_Compute(PID_Controller *pid, float measured_value);
-
+void PID_SetTunings(PID_Controller *pid, float Kp, float Ki, float Kd);
 
 #ifdef __cplusplus
 }

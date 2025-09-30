@@ -34,4 +34,9 @@ float PID_Compute(PID_Controller *pid, float measured_value) {
     arm_add_f32(&output, &d, &output, 1);
     return output;
 }
-
+// 修改PID参数
+void PID_SetTunings(PID_Controller *pid, float Kp, float Ki, float Kd) {
+    pid->Kp = Kp;
+    pid->Ki = Ki;
+    pid->Kd = Kd;
+}

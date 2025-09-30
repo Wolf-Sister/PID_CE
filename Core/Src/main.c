@@ -28,6 +28,7 @@
 #include "PID.h"
 #include "FreeRTOS.h"
 #include "queue.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,11 +50,19 @@
 
 /* USER CODE BEGIN PV */
 uint8_t receiveData[7]; // 接收数据缓存
+uint8_t vofacmd_data[8]; // 接收数据缓存
 QueueHandle_t receiveDataQueue = NULL;// 接收数据队列
 PID_Controller pid_pitch;// PID控制器俯仰
 PID_Controller pid_yaw;// PID控制器偏航
 uint8_t uartTxReady = 0; // 串口发送完成标志
 uint8_t uartTxReady6 = 0; // 串口6发送完成标志
+// PID参数
+float pid_kp = 0.1f;
+float pid_ki = 0.0f;
+float pid_kd = 0.5f;
+uint8_t pid_ce = 0;// PID修改标志
+uint8_t pid_hc = 0; // PID回传参数标志
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -113,14 +122,14 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	// 启动定时器4串口接收（接收字节长度7的数据）
 	HAL_UART_Receive_DMA(&huart4, receiveData, 7);
-	// 启动定时器2串口接收（接收字节长度4的数据）
-	HAL_UART_Receive_DMA(&huart2, receiveData, 4);
+	// 启动定时器6串口接收（接收字节长度8的数据）
+	HAL_UART_Receive_DMA(&huart6, vofacmd_data, 8);
 	// 创建接收数据队列
 	receiveDataQueue = xQueueCreate(5, sizeof(SensorData_t));
 
 	// PID参数初始化
-	PID_Init(&pid_yaw, 0.1f, 0.0f, 0.5f);
-    PID_Init(&pid_pitch, 0.1f, 0.0f, 0.5f);
+	PID_Init(&pid_yaw, pid_kp, pid_ki, pid_kd);
+    PID_Init(&pid_pitch, pid_kp, pid_ki, pid_kd);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -205,6 +214,43 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		// 重新启动DMA接收
 		HAL_UART_Receive_DMA(&huart4, receiveData, 7);
 	}
+    if (huart == &huart6){
+        if (vofacmd_data[0] == 0xAA && vofacmd_data[1] == 0xAF && vofacmd_data[7] == 0xFE){
+            // 处理vofa命令数据
+            switch (vofacmd_data[2])
+            {
+			float value;
+            case 0x01:
+                // 修改P
+                
+                memcpy(&value, vofacmd_data + 3, 4);
+                pid_kp = value;
+                pid_ce = 1;
+                break;
+            case 0x02:
+                // 修改I
+                memcpy(&value, vofacmd_data + 3, 4);
+                pid_ki = value;
+                pid_ce = 1;
+                break;
+            case 0x03:
+                // 修改D
+                memcpy(&value, vofacmd_data + 3, 4);
+                pid_kd = value;
+                pid_ce = 1;
+                break;
+            case 0x04:
+                // 修改误差量
+                if (vofacmd_data[3] == 0x00 && vofacmd_data[4] == 0x00 && vofacmd_data[5] == 0x80 && vofacmd_data[6] == 0x3F){
+                    pid_hc = 1;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+		HAL_UART_Receive_DMA(&huart6, vofacmd_data, 8);
+    }
 }
 /* USER CODE END 4 */
 

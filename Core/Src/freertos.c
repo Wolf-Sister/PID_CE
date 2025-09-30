@@ -55,6 +55,11 @@ extern PID_Controller pid_pitch;
 extern PID_Controller pid_yaw;
 extern uint8_t uartTxReady;
 extern uint8_t uartTxReady6;
+extern float pid_kp;
+extern float pid_ki;
+extern float pid_kd;
+extern uint8_t pid_ce; // PID修改标志
+extern uint8_t pid_hc; // PID回传参数标志
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -417,7 +422,24 @@ void StartTask05(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    send_VOFA_data(1.0f, 2.0f, 3.0f, 4.0f);
+    //send_VOFA_data(1.0f, 2.0f, 3.0f, 4.0f);
+    if (pid_ce) {
+
+        PID_SetTunings(&pid_yaw, pid_kp, pid_ki, pid_kd);
+        pid_ce = 0;
+
+        if (osMutexAcquire(UART6Handle, osWaitForever) == osOK) {
+		    printf("PID 修改完成\r\n");
+		    osMutexRelease(UART6Handle);
+	    }
+    }
+    if (pid_hc) {
+        if (osMutexAcquire(UART6Handle, osWaitForever) == osOK) {
+            printf("回传PID参数: Kp=%.2f, Ki=%.2f, Kd=%.2f\r\n", pid_yaw.Kp, pid_yaw.Ki, pid_yaw.Kd);
+            osMutexRelease(UART6Handle);
+        }
+        pid_hc = 0;
+    }
     osDelay(100);
   }
   /* USER CODE END StartTask05 */
