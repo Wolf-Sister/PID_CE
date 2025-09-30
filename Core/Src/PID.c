@@ -14,25 +14,22 @@ void PID_Init(PID_Controller *pid, float Kp, float Ki, float Kd) {
     pid->prev_error = 0.0f;
     pid->output_sum = 0.0f;
 }
-// 位置式PID计算
+// 增量式PID计算
 float PID_Compute(PID_Controller *pid, float measured_value) {
-    float error, derivative, output;
-    float p, i, d;
-    // 计算误差
-    arm_sub_f32(&(pid->setpoint), &measured_value, &error, 1); // error = setpoint - measured_value
-    // 积分项累加
-    arm_add_f32(&(pid->integral), &error, &(pid->integral), 1); // integral += error
-    // 微分项
-    arm_sub_f32(&error, &(pid->prev_error), &derivative, 1); // derivative = error - prev_error
-    // 记录当前误差
-    pid->prev_error = error;
-    // 位置式PID公式
-    arm_mult_f32(&(pid->Kp), &error, &p, 1);
-    arm_mult_f32(&(pid->Ki), &(pid->integral), &i, 1);
-    arm_mult_f32(&(pid->Kd), &derivative, &d, 1);
-    arm_add_f32(&p, &i, &output, 1);
-    arm_add_f32(&output, &d, &output, 1);
-    return output;
+    float error, delta_output;
+    float delta_p, delta_i, delta_d;
+    static float prev_error = 0.0f, prev_prev_error = 0.0f;
+    // 计算当前误差
+    error = pid->setpoint - measured_value;
+    // 增量式PID公式
+    delta_p = pid->Kp * (error - prev_error);
+    delta_i = pid->Ki * error;
+    delta_d = pid->Kd * (error - 2 * prev_error + prev_prev_error);
+    delta_output = delta_p + delta_i + delta_d;
+    // 更新误差历史
+    prev_prev_error = prev_error;
+    prev_error = error;
+    return delta_output;
 }
 // 修改PID参数
 void PID_SetTunings(PID_Controller *pid, float Kp, float Ki, float Kd) {
