@@ -121,7 +121,7 @@ int main(void)
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 	// 启动定时器4串口接收（接收字节长度7的数据）
-	HAL_UART_Receive_DMA(&huart4, receiveData, 7);
+	//HAL_UART_Receive_DMA(&huart4, receiveData, 7);
 	// 启动定时器6串口接收（接收字节长度8的数据）
 	HAL_UART_Receive_DMA(&huart6, vofacmd_data, 8);
 	// 创建接收数据队列
@@ -200,7 +200,7 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if (huart == &huart4)
+	if (0)
     {
 		SensorData_t Data;
 		if (receiveData[0] == 0xAA && receiveData[1] == 0xAF && receiveData[6] == 0xFE)
@@ -245,6 +245,16 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                     pid_hc = 1;
                 }
                 break;
+            case 0x05:
+                // 修改控制量
+                memcpy(&value, vofacmd_data + 3, 4);
+
+                SensorData_t Data;
+                Data.x = (int16_t)value;
+			    Data.y = 0;
+                BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+			    xQueueSendToBackFromISR(receiveDataQueue, &Data, &xHigherPriorityTaskWoken);
+			    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
             default:
                 break;
             }
