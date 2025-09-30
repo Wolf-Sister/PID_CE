@@ -19,7 +19,8 @@ typedef struct {
     float setpoint; // 目标值
     float integral; // 积分值
     float prev_error; // 上一次误差
-	float output_sum;
+    float prev_prev_error; // 新增的成员
+    float output_sum;      // 输出和
 } PID_Controller;
 
 void PID_Init(PID_Controller *pid, float Kp, float Ki, float Kd);

@@ -293,7 +293,8 @@ void StartTask02(void *argument)
 			//printf("x: %d, y: %d\r\n", target_yaw_deg, target_pitch_deg);
 	  }
 	  float yaw_out = PID_Compute(&pid_yaw, target_yaw_deg);
-	  float pitch_out = PID_Compute(&pid_pitch, target_pitch_deg);
+	  float pitch_out = 0;
+		  //PID_Compute(&pid_pitch, target_pitch_deg);
 
 	  // 发送计算后的角度数据到发送队列
 	  // yaw放数据前判断队列是否已满，满了就先取出一个
